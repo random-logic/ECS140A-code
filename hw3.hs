@@ -125,8 +125,16 @@ myorderedhelper_pm (x:xs) a
   | x >= a = myorderedhelper_pm xs x
   | otherwise = False
 
+myordered_pm :: (Ord a) => [a] -> Bool
+myordered_pm [] = True
+myordered_pm lst = myorderedhelper (tail lst) (head lst)
+
 -- 8
 -- no restriction
+
+-- TODO: Dummy value
+computeFees :: String -> Int
+computeFees input = 0
 
 {--
 -- Define the data structures
