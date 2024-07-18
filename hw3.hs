@@ -2,18 +2,7 @@
 {-# HLINT ignore "Use camelCase" #-}
 {-# HLINT ignore "Use foldl" #-}
 
-{--
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# LANGUAGE OverloadedStrings #-}
-
-module Main where
-
-import System.IO (readFile)
-import Data.List (intercalate)
--- import Data.List.Split (splitOn)
-import Text.Printf (printf)
---}
-
+import Text.Read (readMaybe)
 
 -- 1
 -- without pattern matching
@@ -130,145 +119,78 @@ myordered_pm [] = True
 myordered_pm lst = myorderedhelper (tail lst) (head lst)
 
 -- 8
--- no restriction
+-- helpers
+splitOn :: Char -> String -> [String]
+splitOn _ [] = [""]
+splitOn delimiter (c:cs)
+    | c == delimiter = "" : rest
+    | otherwise = (c : head rest) : tail rest
+    where
+        rest = splitOn delimiter cs
 
--- TODO: Dummy value
-computeFees :: String -> Int
-computeFees input = 0
+stringToDouble :: String -> Double
+stringToDouble s = case reads s :: [(Double, String)] of
+    [(n, "")] -> n
+    _         -> error "Invalid input"
 
-{--
--- Define the data structures
-data Study = CS | EE | CE | ME | Unknown deriving (Eq, Show, Read)
+-- degree student
+recAndAthleticsFee :: Double
+recAndAthleticsFee = 100
 
-data AcademicStanding = Freshman | Sophomore | Junior | Senior | UnknownStanding deriving (Eq, Show, Read)
+studentUnionFee :: Double
+studentUnionFee = 50
 
-data Student
-  = DegreeSeekingStudent
-      { id :: Int,
-        firstName :: String,
-        lastName :: String,
-        age :: Int,
-        credits :: Int,
-        major :: Study,
-        standing :: AcademicStanding
-      }
-  | StudentWithFinancialAid
-      { id :: Int,
-        firstName :: String,
-        lastName :: String,
-        age :: Int,
-        credits :: Int,
-        major :: Study,
-        standing :: AcademicStanding,
-        financialAid :: Double
-      }
-  | CertificateStudent
-      { id :: Int,
-        firstName :: String,
-        lastName :: String,
-        age :: Int,
-        credits :: Int,
-        certificate :: Study
-      }
-  | SeniorCitizen
-      { id :: Int,
-        firstName :: String,
-        lastName :: String,
-        age :: Int,
-        credits :: Int
-      }
-  deriving (Eq, Show)
+costPerCreditForDegreeStudent :: Double
+costPerCreditForDegreeStudent = 275
 
--- Helper functions to interpret input
-interpretStudy :: String -> Study
-interpretStudy "CS" = CS
-interpretStudy "EE" = EE
-interpretStudy "CE" = CE
-interpretStudy "ME" = ME
-interpretStudy _    = Unknown
+maxCreditsForDegreeStudent :: Double
+maxCreditsForDegreeStudent = 12
 
-interpretStanding :: String -> AcademicStanding
-interpretStanding "Freshman" = Freshman
-interpretStanding "Sophomore" = Sophomore
-interpretStanding "Junior" = Junior
-interpretStanding "Senior" = Senior
-interpretStanding _         = UnknownStanding
+computeFeesForStudentWithAid :: [String] -> Double
+computeFeesForStudentWithAid [credits, aid] = computeFeesForDegreeStudent [credits] - stringToDouble aid
 
--- Fee calculation based on student type
-calculateFee :: Student -> Double
-calculateFee (DegreeSeekingStudent _ _ _ _ credits _ _) = fromIntegral credits * 300
-calculateFee (StudentWithFinancialAid _ _ _ _ credits _ _ financialAid) = (fromIntegral credits * 300) - financialAid
-calculateFee (CertificateStudent _ _ _ _ credits _) = fromIntegral credits * 200
-calculateFee (SeniorCitizen _ _ _ _ _) = 0
+computeFeesForDegreeStudent :: [String] -> Double
+computeFeesForDegreeStudent [credits]
+  | stringToDouble credits >= maxCreditsForDegreeStudent = recAndAthleticsFee + studentUnionFee + costPerCreditForDegreeStudent * maxCreditsForDegreeStudent
+  | otherwise = recAndAthleticsFee + studentUnionFee + costPerCreditForDegreeStudent * stringToDouble credits
+computeFeesForDegreeStudent (credits:_:_:hasFinancialAid:xs)
+  | hasFinancialAid == "Y" = computeFeesForStudentWithAid (credits:xs)
+  | otherwise = computeFeesForDegreeStudent [credits]
 
--- Read and parse the file
-parseFile :: String -> IO [Student]
-parseFile filename = do
-  content <- readFile filename
-  let linesOfFile = lines content
-  return (map parseLine linesOfFile)
+-- non degree student
+fixedFeeForCertificateStudent :: Double
+fixedFeeForCertificateStudent = 700
 
-parseLine :: String -> Student
-parseLine line =
-  let [idStr, firstName, lastName, ageStr, creditsStr, isFullTimeStr, extra1, extra2, extra3] = splitOn ";" line
-      id = read idStr
-      age = read ageStr
-      credits = read creditsStr
-      isFullTime = isFullTimeStr == "Y"
-  in if isFullTime
-     then let major = interpretStudy extra1
-              standing = interpretStanding extra2
-              receivesFinancialAid = extra3 == "Y"
-          in if receivesFinancialAid
-             then let financialAid = read (splitOn ";" line !! 9)
-                  in StudentWithFinancialAid id firstName lastName age credits major standing financialAid
-             else DegreeSeekingStudent id firstName lastName age credits major standing
-     else if extra1 == "C"
-          then CertificateStudent id firstName lastName age credits (interpretStudy extra2)
-          else if extra1 == "S"
-               then SeniorCitizen id firstName lastName age credits
-               else error "Invalid data"
+costPerCreditForCertificateStudent :: Double
+costPerCreditForCertificateStudent = 300
 
--- Generate the report
-generateReport :: IO String
-generateReport = do
-  students <- parseFile "hw2.txt"
-  let reportBuilder = concat
-        [ "Summary of each student's fees assessed: \n\n"
-        , intercalate "\n" (map studentReport students)
-        , "\n\nSummary of all student fees assessed: \n\n"
-        , summaryReport students
-        ]
-  return reportBuilder
+computeFeesForCertificateStudent :: [String] -> Double
+computeFeesForCertificateStudent [credits] = fixedFeeForCertificateStudent + costPerCreditForCertificateStudent * stringToDouble credits
 
-studentReport :: Student -> String
-studentReport student = 
-  let name = firstName student ++ " " ++ lastName student
-      fee = calculateFee student
-  in name ++ " has $" ++ printf "%,d" (round fee :: Int) ++ " fees assessed"
+fixedFeeForSeniorStudents :: Double
+fixedFeeForSeniorStudents = 100
 
-summaryReport :: [Student] -> String
-summaryReport students =
-  let (degreeNoFin, degreeFin, cert, senior, total) = foldr accumulate (0, 0, 0, 0, 0) students
-  in concat
-     [ "Degree-seeking students without financial assistance: $" ++ printf "%,d" (round degreeNoFin :: Int) ++ "\n"
-     , "Degree-seeking students with financial assistance: $" ++ printf "%,d" (round degreeFin :: Int) ++ "\n"
-     , "Certificate students: $" ++ printf "%,d" (round cert :: Int) ++ "\n"
-     , "Senior citizens: $" ++ printf "%,d" (round senior :: Int) ++ "\n\n"
-     , "Total fees assessed: $" ++ printf "%,d" (round total :: Int)
-     ]
+creditsIncludedForSeniorStudents :: Double
+creditsIncludedForSeniorStudents = 6
 
-accumulate :: Student -> (Double, Double, Double, Double, Double) -> (Double, Double, Double, Double, Double)
-accumulate student (degreeNoFin, degreeFin, cert, senior, total) =
-  let fee = calculateFee student
-  in case student of
-       DegreeSeekingStudent{} -> (degreeNoFin + fee, degreeFin, cert, senior, total + fee)
-       StudentWithFinancialAid{} -> (degreeNoFin, degreeFin + fee, cert, senior, total + fee)
-       CertificateStudent{} -> (degreeNoFin, degreeFin, cert + fee, senior, total + fee)
-       SeniorCitizen{} -> (degreeNoFin, degreeFin, cert, senior + fee, total + fee)
+additionalFeePerCreditForSeniorStudents :: Double
+additionalFeePerCreditForSeniorStudents = 50
 
-main :: IO ()
-main = do
-  report <- generateReport
-  putStrLn report
---}
+computeFeesForSeniorStudent :: [String] -> Double
+computeFeesForSeniorStudent [credits]
+  | stringToDouble credits <= creditsIncludedForSeniorStudents = fixedFeeForSeniorStudents
+  | otherwise = fixedFeeForSeniorStudents + (stringToDouble credits - creditsIncludedForSeniorStudents) * additionalFeePerCreditForSeniorStudents
+
+computeFeesForNonDegreeStudent :: [String] -> Double
+computeFeesForNonDegreeStudent (credits:certificateOrSenior:_)
+  | certificateOrSenior == "C" = computeFeesForCertificateStudent [credits]
+  | otherwise = computeFeesForSeniorStudent [credits]
+
+computeFeesFromData :: [String] -> Double
+computeFeesFromData (_:_:_:_:credits:isDegreeStudent:xs)
+  | isDegreeStudent == "Y" = computeFeesForDegreeStudent (credits:xs)
+  | otherwise = computeFeesForNonDegreeStudent (credits:xs)
+
+-- function to implement
+computeFees :: String -> Double
+computeFees input = computeFeesFromData (splitOn ';' input)
