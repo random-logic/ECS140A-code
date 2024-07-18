@@ -93,7 +93,7 @@ myreverse_pm lst = reversehelper_pm lst []
 -- 6
 -- without pattern matching
 myreplaceall :: (Eq a) => a -> a -> [a] -> [a]
-myreplaceall x y lst
+myreplaceall y x lst
   | null lst = []
   | head lst == x = y : myreplaceall x y (tail lst)
   | otherwise = head lst : myreplaceall x y (tail lst)
@@ -101,7 +101,7 @@ myreplaceall x y lst
 -- with pattern matching
 myreplaceall_pm :: (Eq a) => a -> a -> [a] -> [a]
 myreplaceall_pm _ _ [] = []
-myreplaceall_pm a b (x:xs)
+myreplaceall_pm b a (x:xs)
   | x == a = b : myreplaceall_pm a b xs
   | otherwise = x : myreplaceall_pm a b xs
 
