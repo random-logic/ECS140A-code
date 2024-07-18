@@ -2,8 +2,6 @@
 {-# HLINT ignore "Use camelCase" #-}
 {-# HLINT ignore "Use foldl" #-}
 
-import Text.Read (readMaybe)
-
 -- 1
 -- without pattern matching
 myremoveduplicates :: (Eq a) => [a] -> [a]
