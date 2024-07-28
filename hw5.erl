@@ -34,5 +34,5 @@ myreverse([H|T], Acc) -> myreverse(T, [H|Acc]).
 
 % 5) myreplaceall
 myreplaceall(_, _, []) -> [];
-myreplaceall(New, Old, [Old|T]) -> [New | myreplaceall(Old, New, T)];
-myreplaceall(New, Old, [H|T]) -> [H | myreplaceall(Old, New, T)].
+myreplaceall(New, Old, [Old|T]) -> [New | myreplaceall(New, Old, T)];
+myreplaceall(New, Old, [H|T]) -> [H | myreplaceall(New, Old, T)].
