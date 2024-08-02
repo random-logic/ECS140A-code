@@ -1,0 +1,51 @@
+1.
+shuffle([], L, L).
+shuffle(L, [], L).
+shuffle([H1|T1], [H2|T2], [H1|H2|T3]) :- shuffle(T1, T2, T3)
+
+2.
+a. A = a
+b. X = [a, b], Y = [a | b | Z], W = b
+c. X = Xs = [], Ys = Zs = [a, b, c]
+
+3.
+First answer:
+1. path(r13,r21)
+2. connects_to(r13, Z), path(Z, r21)
+3. path(r12, r21)
+4. connects_to(r12, Z), path(Z, r21)
+5. path(r11, r21)
+6. connects_to(r11, r21)
+
+Second answer:
+1. path(r13, r21)
+2. connects_to(r13, Z), path(Z, r21)
+3. connects_to(r13, Z), connects_to(Z, Z'), path(Z', r21)
+4. connects_to(r13, Z), connects_to(Z, Z'), connects_to(Z', r21)
+5. connects_to(r13, Z), connects_to(Z, r11)
+6. connects_to(r13, r12)
+
+4. 
+diff([H|T]) :- \+ member(H, T), diff(T).
+
+5.
+sumseries n
+  | n == 0 = 0
+  | otherwise = n + sumseries (n - 1)
+
+sumseriesTRHelper n res
+  | n == 0 = res
+  | otherwise = sumseries (n - 1) (n + res)
+
+sumseriesTR n = sumseriesTRHelper n 0
+
+6.
+??
+
+7.
+Type inferencing allows the programmer to write less code by not including the type declaration while preventing the programmer from using the same variable for different types.
+
+8.
+myintersection([], _) = []
+myintersection(_, []) = []
+??
